@@ -42,13 +42,16 @@ pub mod counter {
     }
 }
 
+// 8 (discriminador) + 8 (campo count) + 32 (authority): 48 bytes (total espacio reservado).
+const COUNTER_SIZE: usize = 8 + 8 + 32;
+
 #[derive(Accounts)]
 #[instruction(initial_count: u64)] // Definir un argumento adicional para la instrucción
 pub struct CreateCounter<'info> {
     // `init` inicializa una nueva cuenta.
     // `payer = authority` especifica que `autoridad` paga por la creación de la cuenta.
-    // `space = 8 (discriminador) + 8 (campo count) + 32 (authority)`, total espacio reservado: 48 bytes.
-    #[account(init, payer = authority, space = 8 + 8 + 32)]
+    // `space = COUNTER_SIZE` especifica el tamaño de la cuenta.
+    #[account(init, payer = authority, space = COUNTER_SIZE)]
     pub counter: Account<'info, Counter>, // Cuenta de tipo `Contador`.
     #[account(mut)]
     pub authority: Signer<'info>, // Firmante mutable de la transacción, paga por la creación de la cuenta.
@@ -108,10 +111,10 @@ pub struct Counter {
 
 #[error_code]
 pub enum ErrorCode {
-    #[msg("You are not authorized.")]
+    #[msg("No autorizado: solo el creador del contador puede modificarlo.")]
     NotAuthorized,
-    #[msg("Counter already at 0.")]
+    #[msg("Decremento no permitido: el contador ya está en 0.")]
     CantDecrement,
-    #[msg("Counter already at u64::MAX.")]
+    #[msg("Incremento no permitido: el contador ha alcanzado el valor máximo.")]
     CantIncrement,
 }
